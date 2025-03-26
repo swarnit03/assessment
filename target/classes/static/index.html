@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        input, button { margin: 5px; padding: 8px; }
+        .product { border: 1px solid #ddd; padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Product Management</h2>
+
+    <input type="text" id="name" placeholder="Product Name">
+    <input type="number" id="price" placeholder="Price">
+    <button onclick="addProduct()">Add Product</button>
+
+    <br><br>
+    <input type="text" id="search" placeholder="Search by name">
+    <button onclick="searchProducts()">Search</button>
+
+    <br><br>
+    <input type="number" id="minPrice" placeholder="Min Price">
+    <input type="number" id="maxPrice" placeholder="Max Price">
+    <button onclick="filterProducts()">Filter</button>
+
+    <h3>Product List</h3>
+    <div id="product-list"></div>
+</div>
+
+<script>
+    const apiUrl = "http://localhost:8080/products";
+
+    async function fetchProducts() {
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        displayProducts(data);
+    }
+
+    async function addProduct() {
+        const name = document.getElementById("name").value;
+        const price = document.getElementById("price").value;
+
+        await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, price })
+        });
+        fetchProducts();
+    }
+
+    async function updateProduct(id) {
+        const name = prompt("Enter new product name:");
+        const price = prompt("Enter new product price:");
+
+        if (name && price) {
+            await fetch(`${apiUrl}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, price })
+            });
+            fetchProducts();
+        }
+    }
+
+    async function deleteProduct(id) {
+        await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+        fetchProducts();
+    }
+
+    async function searchProducts() {
+        const name = document.getElementById("search").value;
+        const res = await fetch(`${apiUrl}/search?name=${name}`);
+        const data = await res.json();
+        displayProducts(data);
+    }
+
+    async function filterProducts() {
+        const minPrice = document.getElementById("minPrice").value;
+        const maxPrice = document.getElementById("maxPrice").value;
+        const res = await fetch(`${apiUrl}/filter?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+        const data = await res.json();
+        displayProducts(data);
+    }
+
+    function displayProducts(products) {
+        const list = document.getElementById("product-list");
+        list.innerHTML = "";
+        products.forEach(p => {
+            list.innerHTML += `<div class='product'>
+                <strong>${p.name}</strong> - $${p.price}
+                <button onclick="updateProduct(${p.id})">Update</button>
+                <button onclick="deleteProduct(${p.id})">Delete</button>
+            </div>`;
+        });
+    }
+
+    fetchProducts();
+</script>
+</body>
+</html>
